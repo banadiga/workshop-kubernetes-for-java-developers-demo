@@ -1,0 +1,63 @@
+version: '3.4'
+
+services:
+
+  book-server:
+    image: bookservice
+    build:
+      context: ./bookservice
+      dockerfile: Dockerfile
+    ports:
+      - "80:8080"
+    networks:
+      - application-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-server:5432/bookservice
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: password
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-service:8761/eureka/
+    links:
+      - postgres-server
+      - eureka-service
+
+  eureka-service:
+    image: eurekaservice
+    build:
+      context: ./eurekaservice
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    networks:
+      - application-network
+
+  postgres-server:
+    image: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - application-network
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bookservice
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+
+  flyway:
+    image: flyway/flyway
+    command: -url=jdbc:postgresql://postgres-server:5432/bookservice -schemas=public -user=admin -password=password -connectRetries=60 migrate
+    networks:
+      - application-network
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql
+    links:
+      - postgres-server
+
+networks:
+  application-network:
+    driver: bridge
+
+volumes:
+  postgresql:
+  postgresql_data:
