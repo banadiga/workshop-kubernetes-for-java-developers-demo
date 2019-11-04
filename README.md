@@ -22,7 +22,8 @@ docker run -d --name db -e POSTGRES_DB=db -e POSTGRES_USER=user -e POSTGRES_PASS
 
 - Migrate database (use flyway)
 
-```bash
+```
+cd bookservice
 flyway -url="jdbc:postgresql://localhost:54320/db"  migrate
 ```
 
